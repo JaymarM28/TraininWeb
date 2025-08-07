@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  cedula    String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  videoUrl    String?
+  imageUrl    String?
+  category    String
+  difficulty  Difficulty
+  muscleGroup String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  routineExercises RoutineExercise[]
+
+  @@map("exercises")
+}
+
+model Routine {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  difficulty  Difficulty
+  duration    Int      // en minutos
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exercises RoutineExercise[]
+
+  @@map("routines")
+}
+
+model RoutineExercise {
+  id         String @id @default(cuid())
+  routineId  String
+  exerciseId String
+  sets       Int
+  reps       String // "12" o "12-15" o "30 segundos"
+  order      Int
+
+  routine  Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@map("routine_exercises")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
