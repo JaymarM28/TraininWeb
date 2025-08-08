@@ -1,0 +1,760 @@
+/**
+ * HTTP API Client for TraininWeb
+ * Centralized HTTP client with interceptors and error handling
+ * Implements API contracts for type safety
+ */
+
+import { API_ENDPOINTS } from '@/shared/constants/paths';
+import { 
+  ApiResponse, 
+  ApiError, 
+  ApiRequestConfig,
+  AuthTokens,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  User,
+  Workout,
+  Exercise,
+  TrainingPlan,
+  Progress,
+  WorkoutSession,
+  PaginationParams,
+  PaginatedResponse
+} from '@/shared/types/shared-types';
+import { 
+  AuthApiContract,
+  UserApiContract,
+  WorkoutApiContract,
+  ExerciseApiContract,
+  TrainingPlanApiContract,
+  ProgressApiContract,
+  WorkoutSessionApiContract,
+  API_ERROR_CODES,
+  ApiErrorCode
+} from '@/shared/contracts/api-contracts';
+
+class ApiClient {
+  private baseURL: string;
+  private defaultHeaders: Record<string, string>;
+
+  constructor() {
+    this.baseURL = API_ENDPOINTS.BASE_URL;
+    this.defaultHeaders = {
+      'Content-Type': 'application/json',
+    };
+  }
+
+  // ============================================================================
+  // AUTHENTICATION METHODS
+  // ============================================================================
+
+  async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+    return this.post<AuthResponse>('/api/auth/login', data);
+  }
+
+  async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
+    return this.post<AuthResponse>('/api/auth/register', data);
+  }
+
+  async logout(): Promise<ApiResponse<void>> {
+    return this.post<void>('/api/auth/logout');
+  }
+
+  async refreshToken(refreshToken: string): Promise<ApiResponse<AuthResponse>> {
+    return this.post<AuthResponse>('/api/auth/refresh', { refreshToken });
+  }
+
+  async verifyToken(token: string): Promise<ApiResponse<{ valid: boolean }>> {
+    return this.post<{ valid: boolean }>('/api/auth/verify', { token });
+  }
+
+  async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.post<{ message: string }>('/api/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, password: string): Promise<ApiResponse<{ message: string }>> {
+    return this.post<{ message: string }>('/api/auth/reset-password', { token, password });
+  }
+
+  // ============================================================================
+  // USER METHODS
+  // ============================================================================
+
+  async createUser(data: RegisterRequest): Promise<ApiResponse<User>> {
+    return this.post<User>('/api/users', data);
+  }
+
+  async findUserById(id: string): Promise<ApiResponse<User>> {
+    return this.get<User>(`/api/users/${id}`);
+  }
+
+  async findUserByEmail(email: string): Promise<ApiResponse<User>> {
+    return this.get<User>('/api/users/email', { email });
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
+    return this.put<User>(`/api/users/${id}`, data);
+  }
+
+  async deleteUser(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/users/${id}`);
+  }
+
+  async findAllUsers(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<User>>> {
+    return this.get<PaginatedResponse<User>>('/api/users', params);
+  }
+
+  async findUsersByRole(role: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<User>>> {
+    return this.get<PaginatedResponse<User>>('/api/users/role', { role, ...params });
+  }
+
+  async updateUserProfile(id: string, profile: Partial<User>): Promise<ApiResponse<User>> {
+    return this.patch<User>(`/api/users/${id}/profile`, profile);
+  }
+
+  async updateUserPreferences(id: string, preferences: Partial<User>): Promise<ApiResponse<User>> {
+    return this.patch<User>(`/api/users/${id}/preferences`, preferences);
+  }
+
+  async uploadUserAvatar(id: string, file: File): Promise<ApiResponse<{ avatarUrl: string }>> {
+    return this.uploadFile<{ avatarUrl: string }>(`/api/users/${id}/avatar`, file);
+  }
+
+  async activateUser(id: string): Promise<ApiResponse<User>> {
+    return this.patch<User>(`/api/users/${id}/activate`);
+  }
+
+  async deactivateUser(id: string): Promise<ApiResponse<User>> {
+    return this.patch<User>(`/api/users/${id}/deactivate`);
+  }
+
+  async verifyUser(id: string): Promise<ApiResponse<User>> {
+    return this.patch<User>(`/api/users/${id}/verify`);
+  }
+
+  // ============================================================================
+  // WORKOUT METHODS
+  // ============================================================================
+
+  async createWorkout(data: Partial<Workout>): Promise<ApiResponse<Workout>> {
+    return this.post<Workout>('/api/workouts', data);
+  }
+
+  async findWorkoutById(id: string): Promise<ApiResponse<Workout>> {
+    return this.get<Workout>(`/api/workouts/${id}`);
+  }
+
+  async updateWorkout(id: string, data: Partial<Workout>): Promise<ApiResponse<Workout>> {
+    return this.put<Workout>(`/api/workouts/${id}`, data);
+  }
+
+  async deleteWorkout(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/workouts/${id}`);
+  }
+
+  async findAllWorkouts(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts', params);
+  }
+
+  async findWorkoutsByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts/creator', { creatorId, ...params });
+  }
+
+  async findWorkoutsByType(type: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts/type', { type, ...params });
+  }
+
+  async findWorkoutsByDifficulty(difficulty: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts/difficulty', { difficulty, ...params });
+  }
+
+  async searchWorkouts(query: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts/search', { query, ...params });
+  }
+
+  async findWorkoutsByTags(tags: string[], params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
+    return this.get<PaginatedResponse<Workout>>('/api/workouts/tags', { tags, ...params });
+  }
+
+  async publishWorkout(id: string): Promise<ApiResponse<Workout>> {
+    return this.patch<Workout>(`/api/workouts/${id}/publish`);
+  }
+
+  async archiveWorkout(id: string): Promise<ApiResponse<Workout>> {
+    return this.patch<Workout>(`/api/workouts/${id}/archive`);
+  }
+
+  async duplicateWorkout(id: string): Promise<ApiResponse<Workout>> {
+    return this.post<Workout>(`/api/workouts/${id}/duplicate`);
+  }
+
+  async addExerciseToWorkout(workoutId: string, exerciseData: any): Promise<ApiResponse<Workout>> {
+    return this.post<Workout>(`/api/workouts/${workoutId}/exercises`, exerciseData);
+  }
+
+  async removeExerciseFromWorkout(workoutId: string, exerciseId: string): Promise<ApiResponse<Workout>> {
+    return this.delete<Workout>(`/api/workouts/${workoutId}/exercises/${exerciseId}`);
+  }
+
+  async updateExerciseInWorkout(workoutId: string, exerciseId: string, data: any): Promise<ApiResponse<Workout>> {
+    return this.put<Workout>(`/api/workouts/${workoutId}/exercises/${exerciseId}`, data);
+  }
+
+  // ============================================================================
+  // EXERCISE METHODS
+  // ============================================================================
+
+  async createExercise(data: Partial<Exercise>): Promise<ApiResponse<Exercise>> {
+    return this.post<Exercise>('/api/exercises', data);
+  }
+
+  async findExerciseById(id: string): Promise<ApiResponse<Exercise>> {
+    return this.get<Exercise>(`/api/exercises/${id}`);
+  }
+
+  async updateExercise(id: string, data: Partial<Exercise>): Promise<ApiResponse<Exercise>> {
+    return this.put<Exercise>(`/api/exercises/${id}`, data);
+  }
+
+  async deleteExercise(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/exercises/${id}`);
+  }
+
+  async findAllExercises(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises', params);
+  }
+
+  async findExercisesByCategory(category: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/category', { category, ...params });
+  }
+
+  async findExercisesByDifficulty(difficulty: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/difficulty', { difficulty, ...params });
+  }
+
+  async findExercisesByMuscleGroup(muscleGroup: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/muscle-group', { muscleGroup, ...params });
+  }
+
+  async findExercisesByEquipment(equipment: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/equipment', { equipment, ...params });
+  }
+
+  async searchExercises(query: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/search', { query, ...params });
+  }
+
+  async findExercisesByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
+    return this.get<PaginatedResponse<Exercise>>('/api/exercises/creator', { creatorId, ...params });
+  }
+
+  async activateExercise(id: string): Promise<ApiResponse<Exercise>> {
+    return this.patch<Exercise>(`/api/exercises/${id}/activate`);
+  }
+
+  async deactivateExercise(id: string): Promise<ApiResponse<Exercise>> {
+    return this.patch<Exercise>(`/api/exercises/${id}/deactivate`);
+  }
+
+  async uploadExerciseImage(id: string, file: File): Promise<ApiResponse<{ imageUrl: string }>> {
+    return this.uploadFile<{ imageUrl: string }>(`/api/exercises/${id}/image`, file);
+  }
+
+  async uploadExerciseVideo(id: string, file: File): Promise<ApiResponse<{ videoUrl: string }>> {
+    return this.uploadFile<{ videoUrl: string }>(`/api/exercises/${id}/video`, file);
+  }
+
+  async removeExerciseMedia(id: string, mediaType: 'image' | 'video', mediaId: string): Promise<ApiResponse<Exercise>> {
+    return this.delete<Exercise>(`/api/exercises/${id}/media/${mediaType}/${mediaId}`);
+  }
+
+  // ============================================================================
+  // TRAINING PLAN METHODS
+  // ============================================================================
+
+  async createTrainingPlan(data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> {
+    return this.post<TrainingPlan>('/api/training-plans', data);
+  }
+
+  async findTrainingPlanById(id: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.get<TrainingPlan>(`/api/training-plans/${id}`);
+  }
+
+  async updateTrainingPlan(id: string, data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> {
+    return this.put<TrainingPlan>(`/api/training-plans/${id}`, data);
+  }
+
+  async deleteTrainingPlan(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/training-plans/${id}`);
+  }
+
+  async findAllTrainingPlans(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
+    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans', params);
+  }
+
+  async findTrainingPlansByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
+    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/creator', { creatorId, ...params });
+  }
+
+  async findTrainingPlansByGoal(goal: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
+    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/goal', { goal, ...params });
+  }
+
+  async findTrainingPlansByDuration(duration: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
+    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/duration', { duration, ...params });
+  }
+
+  async assignTrainingPlanToUser(planId: string, userId: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.post<TrainingPlan>(`/api/training-plans/${planId}/assign`, { userId });
+  }
+
+  async unassignTrainingPlanFromUser(planId: string, userId: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.delete<TrainingPlan>(`/api/training-plans/${planId}/assign/${userId}`);
+  }
+
+  async getTrainingPlanAssignedUsers(planId: string): Promise<ApiResponse<User[]>> {
+    return this.get<User[]>(`/api/training-plans/${planId}/users`);
+  }
+
+  async activateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.patch<TrainingPlan>(`/api/training-plans/${id}/activate`);
+  }
+
+  async deactivateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.patch<TrainingPlan>(`/api/training-plans/${id}/deactivate`);
+  }
+
+  async duplicateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.post<TrainingPlan>(`/api/training-plans/${id}/duplicate`);
+  }
+
+  async addWorkoutToTrainingPlan(planId: string, workoutId: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.post<TrainingPlan>(`/api/training-plans/${planId}/workouts`, { workoutId });
+  }
+
+  async removeWorkoutFromTrainingPlan(planId: string, workoutId: string): Promise<ApiResponse<TrainingPlan>> {
+    return this.delete<TrainingPlan>(`/api/training-plans/${planId}/workouts/${workoutId}`);
+  }
+
+  async reorderWorkoutsInTrainingPlan(planId: string, workoutIds: string[]): Promise<ApiResponse<TrainingPlan>> {
+    return this.put<TrainingPlan>(`/api/training-plans/${planId}/workouts/reorder`, { workoutIds });
+  }
+
+  // ============================================================================
+  // PROGRESS METHODS
+  // ============================================================================
+
+  async createProgress(data: Partial<Progress>): Promise<ApiResponse<Progress>> {
+    return this.post<Progress>('/api/progress', data);
+  }
+
+  async findProgressById(id: string): Promise<ApiResponse<Progress>> {
+    return this.get<Progress>(`/api/progress/${id}`);
+  }
+
+  async updateProgress(id: string, data: Partial<Progress>): Promise<ApiResponse<Progress>> {
+    return this.put<Progress>(`/api/progress/${id}`, data);
+  }
+
+  async deleteProgress(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/progress/${id}`);
+  }
+
+  async findProgressByUser(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Progress>>> {
+    return this.get<PaginatedResponse<Progress>>('/api/progress/user', { userId, ...params });
+  }
+
+  async findProgressByUserAndCategory(userId: string, category: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Progress>>> {
+    return this.get<PaginatedResponse<Progress>>('/api/progress/user/category', { userId, category, ...params });
+  }
+
+  async addProgressMetric(progressId: string, metric: any): Promise<ApiResponse<Progress>> {
+    return this.post<Progress>(`/api/progress/${progressId}/metrics`, metric);
+  }
+
+  async updateProgressMetric(progressId: string, metricId: string, data: any): Promise<ApiResponse<Progress>> {
+    return this.put<Progress>(`/api/progress/${progressId}/metrics/${metricId}`, data);
+  }
+
+  async removeProgressMetric(progressId: string, metricId: string): Promise<ApiResponse<Progress>> {
+    return this.delete<Progress>(`/api/progress/${progressId}/metrics/${metricId}`);
+  }
+
+  async setProgressGoal(progressId: string, goal: any): Promise<ApiResponse<Progress>> {
+    return this.post<Progress>(`/api/progress/${progressId}/goal`, goal);
+  }
+
+  async updateProgressGoal(progressId: string, goal: any): Promise<ApiResponse<Progress>> {
+    return this.put<Progress>(`/api/progress/${progressId}/goal`, goal);
+  }
+
+  async removeProgressGoal(progressId: string): Promise<ApiResponse<Progress>> {
+    return this.delete<Progress>(`/api/progress/${progressId}/goal`);
+  }
+
+  async getProgressStats(userId: string, category?: string, period?: string): Promise<ApiResponse<any>> {
+    return this.get<any>('/api/progress/stats', { userId, category, period });
+  }
+
+  async getProgressChart(userId: string, category: string, period: string): Promise<ApiResponse<any>> {
+    return this.get<any>('/api/progress/chart', { userId, category, period });
+  }
+
+  // ============================================================================
+  // WORKOUT SESSION METHODS
+  // ============================================================================
+
+  async createWorkoutSession(data: Partial<WorkoutSession>): Promise<ApiResponse<WorkoutSession>> {
+    return this.post<WorkoutSession>('/api/workout-sessions', data);
+  }
+
+  async findWorkoutSessionById(id: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.get<WorkoutSession>(`/api/workout-sessions/${id}`);
+  }
+
+  async updateWorkoutSession(id: string, data: Partial<WorkoutSession>): Promise<ApiResponse<WorkoutSession>> {
+    return this.put<WorkoutSession>(`/api/workout-sessions/${id}`, data);
+  }
+
+  async deleteWorkoutSession(id: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/workout-sessions/${id}`);
+  }
+
+  async findWorkoutSessionsByUser(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
+    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/user', { userId, ...params });
+  }
+
+  async findWorkoutSessionsByWorkout(workoutId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
+    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/workout', { workoutId, ...params });
+  }
+
+  async findWorkoutSessionsByStatus(status: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
+    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/status', { status, ...params });
+  }
+
+  async startWorkoutSession(workoutId: string, userId: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.post<WorkoutSession>('/api/workout-sessions/start', { workoutId, userId });
+  }
+
+  async pauseWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/pause`);
+  }
+
+  async resumeWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/resume`);
+  }
+
+  async completeWorkoutSession(sessionId: string, performance: any): Promise<ApiResponse<WorkoutSession>> {
+    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/complete`, performance);
+  }
+
+  async cancelWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/cancel`);
+  }
+
+  async updateWorkoutSessionPerformance(sessionId: string, exerciseId: string, performance: any): Promise<ApiResponse<WorkoutSession>> {
+    return this.put<WorkoutSession>(`/api/workout-sessions/${sessionId}/performance/${exerciseId}`, performance);
+  }
+
+  async addWorkoutSessionNote(sessionId: string, note: string): Promise<ApiResponse<WorkoutSession>> {
+    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/notes`, { note });
+  }
+
+  async rateWorkoutSession(sessionId: string, rating: number): Promise<ApiResponse<WorkoutSession>> {
+    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/rate`, { rating });
+  }
+
+  async getWorkoutSessionStats(userId: string, period?: string): Promise<ApiResponse<any>> {
+    return this.get<any>('/api/workout-sessions/stats', { userId, period });
+  }
+
+  async getWorkoutHistory(userId: string, workoutId: string): Promise<ApiResponse<WorkoutSession[]>> {
+    return this.get<WorkoutSession[]>(`/api/workout-sessions/history`, { userId, workoutId });
+  }
+
+  // ============================================================================
+  // PRIVATE HELPER METHODS
+  // ============================================================================
+
+  /**
+   * Set authentication token
+   */
+  setAuthToken(token: string): void {
+    this.defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
+  /**
+   * Remove authentication token
+   */
+  removeAuthToken(): void {
+    delete this.defaultHeaders['Authorization'];
+  }
+
+  /**
+   * Get stored auth token from localStorage
+   */
+  private getStoredAuthToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('traininweb_auth_token');
+    }
+    return null;
+  }
+
+  /**
+   * Add auth token to headers if available
+   */
+  private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+    const token = this.getStoredAuthToken();
+    const headers = { ...this.defaultHeaders, ...customHeaders };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+  }
+
+  /**
+   * Build URL with query parameters
+   */
+  private buildURL(endpoint: string, params?: Record<string, any>): string {
+    const url = new URL(endpoint, this.baseURL);
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            value.forEach(v => url.searchParams.append(key, String(v)));
+          } else {
+            url.searchParams.append(key, String(value));
+          }
+        }
+      });
+    }
+    
+    return url.toString();
+  }
+
+  /**
+   * Handle API errors
+   */
+  private handleError(error: any): ApiError {
+    if (error.response) {
+      // Server responded with error status
+      return {
+        code: error.response.status.toString(),
+        message: error.response.data?.message || 'Server error',
+        details: error.response.data,
+      };
+    } else if (error.request) {
+      // Network error
+      return {
+        code: API_ERROR_CODES.NETWORK_ERROR,
+        message: 'Network error - please check your connection',
+      };
+    } else {
+      // Other error
+      return {
+        code: API_ERROR_CODES.INTERNAL_SERVER_ERROR,
+        message: error.message || 'Unknown error occurred',
+      };
+    }
+  }
+
+  /**
+   * Make HTTP request
+   */
+  private async request<T>(
+    config: ApiRequestConfig
+  ): Promise<ApiResponse<T>> {
+    try {
+      const { method, headers, body, params } = config;
+      const url = this.buildURL(config.url, params);
+      const requestHeaders = this.getHeaders(headers);
+
+      const response = await fetch(url, {
+        method,
+        headers: requestHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw {
+          response: {
+            status: response.status,
+            data: responseData,
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData,
+        statusCode: response.status,
+      };
+    } catch (error) {
+      const apiError = this.handleError(error);
+      return {
+        success: false,
+        error: apiError.message,
+        statusCode: parseInt(apiError.code) || 500,
+      };
+    }
+  }
+
+  /**
+   * GET request
+   */
+  private async get<T>(
+    url: string,
+    params?: Record<string, any>,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'GET',
+      url,
+      params,
+      headers,
+    });
+  }
+
+  /**
+   * POST request
+   */
+  private async post<T>(
+    url: string,
+    body?: any,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'POST',
+      url,
+      body,
+      headers,
+    });
+  }
+
+  /**
+   * PUT request
+   */
+  private async put<T>(
+    url: string,
+    body?: any,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'PUT',
+      url,
+      body,
+      headers,
+    });
+  }
+
+  /**
+   * PATCH request
+   */
+  private async patch<T>(
+    url: string,
+    body?: any,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'PATCH',
+      url,
+      body,
+      headers,
+    });
+  }
+
+  /**
+   * DELETE request
+   */
+  private async delete<T>(
+    url: string,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'DELETE',
+      url,
+      headers,
+    });
+  }
+
+  /**
+   * Upload file
+   */
+  private async uploadFile<T>(
+    url: string,
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<ApiResponse<T>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const headers = this.getHeaders();
+      delete headers['Content-Type']; // Let browser set content-type for FormData
+
+      const xhr = new XMLHttpRequest();
+
+      return new Promise((resolve) => {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable && onProgress) {
+            const progress = (event.loaded / event.total) * 100;
+            onProgress(progress);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const responseData = JSON.parse(xhr.responseText);
+            resolve({
+              success: true,
+              data: responseData,
+              statusCode: xhr.status,
+            });
+          } else {
+            resolve({
+              success: false,
+              error: 'Upload failed',
+              statusCode: xhr.status,
+            });
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          resolve({
+            success: false,
+            error: 'Network error during upload',
+            statusCode: 0,
+          });
+        });
+
+        xhr.open('POST', this.buildURL(url));
+        
+        // Add auth header if available
+        const token = this.getStoredAuthToken();
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+
+        xhr.send(formData);
+      });
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Upload failed',
+        statusCode: 500,
+      };
+    }
+  }
+}
+
+// Export singleton instance
+export const apiClient = new ApiClient();
+
+// Export class for testing
+export { ApiClient };
