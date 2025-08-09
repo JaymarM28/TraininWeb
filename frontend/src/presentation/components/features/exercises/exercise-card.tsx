@@ -22,3 +22,4 @@ export function ExerciseCard({ name, description, category }: Props) {
 }
 
 
+

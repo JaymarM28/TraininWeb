@@ -23,7 +23,7 @@ export function Hero() {
         <p className="mt-4 max-w-2xl text-base md:text-lg opacity-90 pr-4">
           Alto rendimiento, disciplina y resultados medibles. Diseñamos tu camino con precisión.
         </p>
-        <div className="mt-8 flex gap-4">
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
           <a className="btn btn-primary" href="/exercises">Explorar ejercicios</a>
           <a className="btn btn-outline" href="/routines">Ver rutinas</a>
         </div>
