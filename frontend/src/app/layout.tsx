@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { MainLayout } from '@/presentation/layouts/main-layout'
+import { ThemeProvider } from '@/presentation/providers/theme-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TraininWeb - Plataforma de Entrenamiento',
-  description: 'Plataforma web integral para gimnasios y entrenadores personales',
-  keywords: 'entrenamiento, gimnasio, ejercicios, fitness, workout',
-  authors: [{ name: 'JaymarM28' }],
+  title: 'JSC ',
+  description: 'Plataforma de entrenamiento con enfoque diferencial y alto rendimiento',
+  keywords: 'JSC, entrenamiento, fuerza, rendimiento, gimnasio, rutinas',
+  authors: [{ name: 'JSC' }],
   viewport: 'width=device-width, initial-scale=1',
 }
 
@@ -20,16 +22,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        {/* 
-          Aquí se integrarán los providers de nuestra arquitectura hexagonal:
-          - AuthProvider
-          - ThemeProvider  
-          - WorkoutProvider
-          - ToastProvider
-        */}
-        <div id="root">
-          {children}
-        </div>
+        <ThemeProvider>
+          <MainLayout>{children}</MainLayout>
+        </ThemeProvider>
       </body>
     </html>
   )
