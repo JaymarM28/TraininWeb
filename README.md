@@ -145,12 +145,12 @@ pnpm start:dev
 ## 🌐 Acceso a la Aplicación
 
 ### Frontend
-- **URL Local**: http://localhost:3000
-- **URL Red**: http://192.168.100.72:3000 (acceso desde otros dispositivos)
+- **URL Local**: http://localhost:3001
+- **URL Red**: http://192.168.100.72:3001 (acceso desde otros dispositivos)
 
 ### Backend API
-- **URL Local**: http://localhost:3001
-- **Documentación Swagger**: http://localhost:3001/api/docs
+- **URL Local**: http://localhost:3000
+- **Documentación Swagger**: http://localhost:3000/api/docs
 
 ## 📱 Entidades del Dominio
 
