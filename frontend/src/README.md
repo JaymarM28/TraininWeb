@@ -1,4 +1,4 @@
-# TraininWeb Frontend - Arquitectura Hexagonal
+# TraininWeb Frontend - Arquitectura Hexagonal + DDD
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -8,37 +8,33 @@ Este proyecto implementa una **Arquitectura Hexagonal (Puertos y Adaptadores)** 
 
 ```
 src/
-├── core/                    # 🎯 Núcleo de la aplicación (Domain + Application)
-│   ├── domain/             # Entidades y lógica de negocio
-│   │   ├── entities/       # Entidades del dominio
-│   │   ├── value-objects/  # Objetos de valor
-│   │   ├── repositories/   # Interfaces de repositorios
-│   │   └── services/       # Servicios del dominio
-│   ├── application/        # Casos de uso y lógica de aplicación
-│   │   ├── use-cases/      # Casos de uso específicos
-│   │   ├── dto/           # Objetos de transferencia de datos
-│   │   └── mappers/       # Mapeadores entre capas
-│   └── ports/             # Puertos (interfaces) de la arquitectura hexagonal
-├── infrastructure/         # 🔌 Adaptadores y implementaciones externas
-│   ├── adapters/          # Adaptadores para servicios externos
-│   ├── repositories/      # Implementaciones de repositorios
-│   ├── services/          # Servicios de infraestructura
-│   ├── http/             # Cliente HTTP y configuraciones
-│   ├── storage/          # Almacenamiento local
-│   └── config/           # Configuraciones de la aplicación
-├── presentation/          # 🎨 Capa de presentación (UI/UX)
-│   ├── pages/            # Páginas de la aplicación
-│   ├── components/       # Componentes reutilizables
-│   ├── hooks/            # Custom hooks de React
-│   ├── providers/        # Context providers
-│   ├── layouts/          # Layouts de la aplicación
-│   └── styles/           # Estilos y configuraciones CSS
-└── shared/               # 🔄 Código compartido entre capas
-    ├── utils/            # Utilidades generales
-    ├── constants/        # Constantes de la aplicación
-    ├── types/            # Tipos TypeScript compartidos
-    ├── interfaces/       # Interfaces compartidas
-    └── helpers/          # Funciones auxiliares
+├── app/                      # App Router (solo orquestación)
+│   ├── layout.tsx            # usa presentation/layouts/MainLayout
+│   ├── page.tsx              # delega a presentation/pages/HomePage
+│   ├── exercises/page.tsx    # delega a presentation/pages/ExercisesPage
+│   └── routines/page.tsx     # delega a presentation/pages/RoutinesPage
+├── core/                     # 🎯 Núcleo (Domain + Application + Ports)
+│   ├── domain/{entities,value-objects,repositories,services}
+│   ├── application/{use-cases,dto,mappers}
+│   └── ports/
+├── infrastructure/           # 🔌 Adaptadores externos
+│   ├── http/api-client.ts
+│   └── {adapters,repositories,services,storage,config}
+├── presentation/             # 🎨 UI
+│   ├── components/
+│   │   ├── layout/{header,footer}.tsx
+│   │   ├── ui/{button,nav-link,brand-logo}.tsx
+│   │   ├── mobile/drawer.tsx
+│   │   └── {aurora-text,sparkle-particles,exercise-card,routine-card}.tsx
+│   ├── layouts/main-layout.tsx
+│   ├── pages/{home-page,exercises-page,routines-page}.tsx
+│   └── providers/theme-provider.tsx
+└── shared/                   # 🔄 Contratos/Tipos/Utilidades compartidas FE/BE
+    ├── constants/paths.ts
+    ├── contracts/api-contracts.ts
+    ├── types/{shared-types.ts,index.ts}
+    ├── utils/cn.ts
+    └── exercise/            # módulo compartido de ejercicios
 ```
 
 ## 🎯 Principios de la Arquitectura
@@ -123,6 +119,21 @@ src/
 - **PascalCase**: Clases, interfaces, tipos
 - **kebab-case**: Nombres de archivos y carpetas
 - **UPPER_SNAKE_CASE**: Constantes
+
+## 📦 Dependencias instaladas hoy
+
+- lightswind@latest
+- clsx
+- tailwind-merge
+- framer-motion
+- lucide-react
+
+## ✅ Cambios de hoy
+- Header/Drawer sólidos y navegación con pills.
+- `Header` movido a `presentation/components/layout/header.tsx` y `Footer` a `layout/footer.tsx`.
+- `MainLayout` actualizado con los nuevos paths.
+- `NavLink` rediseñado; sidebar simplificado.
+- `next.config.ts`: rewrites `/api/*` y headers CORS para `/_next/*` y `fonts/*` en dev LAN.
 
 ## 🎯 Próximos Pasos
 
