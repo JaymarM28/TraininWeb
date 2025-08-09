@@ -24,8 +24,8 @@ export function Hero() {
           Alto rendimiento, disciplina y resultados medibles. Diseñamos tu camino con precisión.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-          <a className="btn btn-primary" href="/exercises">Explorar ejercicios</a>
-          <a className="btn btn-outline" href="/routines">Ver rutinas</a>
+          <a className="btn btn-primary min-w-[200px]" href="/exercises">Explorar ejercicios</a>
+          <a className="btn btn-outline min-w-[200px]" href="/routines">Ver rutinas</a>
         </div>
       </div>
     </section>
