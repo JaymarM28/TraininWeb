@@ -1,5 +1,5 @@
 /**
- * HTTP API Client for TraininWeb
+ * HTTP API Client for TraininWeb - Versión Completa
  * Centralized HTTP client with interceptors and error handling
  * Implements API contracts for type safety
  */
@@ -39,7 +39,7 @@ class ApiClient {
   private defaultHeaders: Record<string, string>;
 
   constructor() {
-    this.baseURL = API_ENDPOINTS.BASE_URL;
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
@@ -67,6 +67,14 @@ class ApiClient {
 
   async verifyToken(token: string): Promise<ApiResponse<{ valid: boolean }>> {
     return this.post<{ valid: boolean }>('/api/auth/verify', { token });
+  }
+
+  async getProfile(): Promise<ApiResponse<{ user: User }>> {
+    return this.get<{ user: User }>('/api/auth/me');
+  }
+
+  async validateToken(): Promise<ApiResponse<{ valid: boolean; user: User }>> {
+    return this.get<{ valid: boolean; user: User }>('/api/auth/validate');
   }
 
   async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
@@ -105,34 +113,6 @@ class ApiClient {
     return this.get<PaginatedResponse<User>>('/api/users', params);
   }
 
-  async findUsersByRole(role: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<User>>> {
-    return this.get<PaginatedResponse<User>>('/api/users/role', { role, ...params });
-  }
-
-  async updateUserProfile(id: string, profile: Partial<User>): Promise<ApiResponse<User>> {
-    return this.patch<User>(`/api/users/${id}/profile`, profile);
-  }
-
-  async updateUserPreferences(id: string, preferences: Partial<User>): Promise<ApiResponse<User>> {
-    return this.patch<User>(`/api/users/${id}/preferences`, preferences);
-  }
-
-  async uploadUserAvatar(id: string, file: File): Promise<ApiResponse<{ avatarUrl: string }>> {
-    return this.uploadFile<{ avatarUrl: string }>(`/api/users/${id}/avatar`, file);
-  }
-
-  async activateUser(id: string): Promise<ApiResponse<User>> {
-    return this.patch<User>(`/api/users/${id}/activate`);
-  }
-
-  async deactivateUser(id: string): Promise<ApiResponse<User>> {
-    return this.patch<User>(`/api/users/${id}/deactivate`);
-  }
-
-  async verifyUser(id: string): Promise<ApiResponse<User>> {
-    return this.patch<User>(`/api/users/${id}/verify`);
-  }
-
   // ============================================================================
   // WORKOUT METHODS
   // ============================================================================
@@ -157,50 +137,6 @@ class ApiClient {
     return this.get<PaginatedResponse<Workout>>('/api/workouts', params);
   }
 
-  async findWorkoutsByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts/creator', { creatorId, ...params });
-  }
-
-  async findWorkoutsByType(type: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts/type', { type, ...params });
-  }
-
-  async findWorkoutsByDifficulty(difficulty: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts/difficulty', { difficulty, ...params });
-  }
-
-  async searchWorkouts(query: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts/search', { query, ...params });
-  }
-
-  async findWorkoutsByTags(tags: string[], params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts/tags', { tags, ...params });
-  }
-
-  async publishWorkout(id: string): Promise<ApiResponse<Workout>> {
-    return this.patch<Workout>(`/api/workouts/${id}/publish`);
-  }
-
-  async archiveWorkout(id: string): Promise<ApiResponse<Workout>> {
-    return this.patch<Workout>(`/api/workouts/${id}/archive`);
-  }
-
-  async duplicateWorkout(id: string): Promise<ApiResponse<Workout>> {
-    return this.post<Workout>(`/api/workouts/${id}/duplicate`);
-  }
-
-  async addExerciseToWorkout(workoutId: string, exerciseData: any): Promise<ApiResponse<Workout>> {
-    return this.post<Workout>(`/api/workouts/${workoutId}/exercises`, exerciseData);
-  }
-
-  async removeExerciseFromWorkout(workoutId: string, exerciseId: string): Promise<ApiResponse<Workout>> {
-    return this.delete<Workout>(`/api/workouts/${workoutId}/exercises/${exerciseId}`);
-  }
-
-  async updateExerciseInWorkout(workoutId: string, exerciseId: string, data: any): Promise<ApiResponse<Workout>> {
-    return this.put<Workout>(`/api/workouts/${workoutId}/exercises/${exerciseId}`, data);
-  }
-
   // ============================================================================
   // EXERCISE METHODS
   // ============================================================================
@@ -223,254 +159,6 @@ class ApiClient {
 
   async findAllExercises(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
     return this.get<PaginatedResponse<Exercise>>('/api/exercises', params);
-  }
-
-  async findExercisesByCategory(category: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/category', { category, ...params });
-  }
-
-  async findExercisesByDifficulty(difficulty: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/difficulty', { difficulty, ...params });
-  }
-
-  async findExercisesByMuscleGroup(muscleGroup: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/muscle-group', { muscleGroup, ...params });
-  }
-
-  async findExercisesByEquipment(equipment: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/equipment', { equipment, ...params });
-  }
-
-  async searchExercises(query: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/search', { query, ...params });
-  }
-
-  async findExercisesByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises/creator', { creatorId, ...params });
-  }
-
-  async activateExercise(id: string): Promise<ApiResponse<Exercise>> {
-    return this.patch<Exercise>(`/api/exercises/${id}/activate`);
-  }
-
-  async deactivateExercise(id: string): Promise<ApiResponse<Exercise>> {
-    return this.patch<Exercise>(`/api/exercises/${id}/deactivate`);
-  }
-
-  async uploadExerciseImage(id: string, file: File): Promise<ApiResponse<{ imageUrl: string }>> {
-    return this.uploadFile<{ imageUrl: string }>(`/api/exercises/${id}/image`, file);
-  }
-
-  async uploadExerciseVideo(id: string, file: File): Promise<ApiResponse<{ videoUrl: string }>> {
-    return this.uploadFile<{ videoUrl: string }>(`/api/exercises/${id}/video`, file);
-  }
-
-  async removeExerciseMedia(id: string, mediaType: 'image' | 'video', mediaId: string): Promise<ApiResponse<Exercise>> {
-    return this.delete<Exercise>(`/api/exercises/${id}/media/${mediaType}/${mediaId}`);
-  }
-
-  // ============================================================================
-  // TRAINING PLAN METHODS
-  // ============================================================================
-
-  async createTrainingPlan(data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> {
-    return this.post<TrainingPlan>('/api/training-plans', data);
-  }
-
-  async findTrainingPlanById(id: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.get<TrainingPlan>(`/api/training-plans/${id}`);
-  }
-
-  async updateTrainingPlan(id: string, data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> {
-    return this.put<TrainingPlan>(`/api/training-plans/${id}`, data);
-  }
-
-  async deleteTrainingPlan(id: string): Promise<ApiResponse<void>> {
-    return this.delete<void>(`/api/training-plans/${id}`);
-  }
-
-  async findAllTrainingPlans(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
-    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans', params);
-  }
-
-  async findTrainingPlansByCreator(creatorId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
-    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/creator', { creatorId, ...params });
-  }
-
-  async findTrainingPlansByGoal(goal: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
-    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/goal', { goal, ...params });
-  }
-
-  async findTrainingPlansByDuration(duration: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> {
-    return this.get<PaginatedResponse<TrainingPlan>>('/api/training-plans/duration', { duration, ...params });
-  }
-
-  async assignTrainingPlanToUser(planId: string, userId: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.post<TrainingPlan>(`/api/training-plans/${planId}/assign`, { userId });
-  }
-
-  async unassignTrainingPlanFromUser(planId: string, userId: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.delete<TrainingPlan>(`/api/training-plans/${planId}/assign/${userId}`);
-  }
-
-  async getTrainingPlanAssignedUsers(planId: string): Promise<ApiResponse<User[]>> {
-    return this.get<User[]>(`/api/training-plans/${planId}/users`);
-  }
-
-  async activateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.patch<TrainingPlan>(`/api/training-plans/${id}/activate`);
-  }
-
-  async deactivateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.patch<TrainingPlan>(`/api/training-plans/${id}/deactivate`);
-  }
-
-  async duplicateTrainingPlan(id: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.post<TrainingPlan>(`/api/training-plans/${id}/duplicate`);
-  }
-
-  async addWorkoutToTrainingPlan(planId: string, workoutId: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.post<TrainingPlan>(`/api/training-plans/${planId}/workouts`, { workoutId });
-  }
-
-  async removeWorkoutFromTrainingPlan(planId: string, workoutId: string): Promise<ApiResponse<TrainingPlan>> {
-    return this.delete<TrainingPlan>(`/api/training-plans/${planId}/workouts/${workoutId}`);
-  }
-
-  async reorderWorkoutsInTrainingPlan(planId: string, workoutIds: string[]): Promise<ApiResponse<TrainingPlan>> {
-    return this.put<TrainingPlan>(`/api/training-plans/${planId}/workouts/reorder`, { workoutIds });
-  }
-
-  // ============================================================================
-  // PROGRESS METHODS
-  // ============================================================================
-
-  async createProgress(data: Partial<Progress>): Promise<ApiResponse<Progress>> {
-    return this.post<Progress>('/api/progress', data);
-  }
-
-  async findProgressById(id: string): Promise<ApiResponse<Progress>> {
-    return this.get<Progress>(`/api/progress/${id}`);
-  }
-
-  async updateProgress(id: string, data: Partial<Progress>): Promise<ApiResponse<Progress>> {
-    return this.put<Progress>(`/api/progress/${id}`, data);
-  }
-
-  async deleteProgress(id: string): Promise<ApiResponse<void>> {
-    return this.delete<void>(`/api/progress/${id}`);
-  }
-
-  async findProgressByUser(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Progress>>> {
-    return this.get<PaginatedResponse<Progress>>('/api/progress/user', { userId, ...params });
-  }
-
-  async findProgressByUserAndCategory(userId: string, category: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Progress>>> {
-    return this.get<PaginatedResponse<Progress>>('/api/progress/user/category', { userId, category, ...params });
-  }
-
-  async addProgressMetric(progressId: string, metric: any): Promise<ApiResponse<Progress>> {
-    return this.post<Progress>(`/api/progress/${progressId}/metrics`, metric);
-  }
-
-  async updateProgressMetric(progressId: string, metricId: string, data: any): Promise<ApiResponse<Progress>> {
-    return this.put<Progress>(`/api/progress/${progressId}/metrics/${metricId}`, data);
-  }
-
-  async removeProgressMetric(progressId: string, metricId: string): Promise<ApiResponse<Progress>> {
-    return this.delete<Progress>(`/api/progress/${progressId}/metrics/${metricId}`);
-  }
-
-  async setProgressGoal(progressId: string, goal: any): Promise<ApiResponse<Progress>> {
-    return this.post<Progress>(`/api/progress/${progressId}/goal`, goal);
-  }
-
-  async updateProgressGoal(progressId: string, goal: any): Promise<ApiResponse<Progress>> {
-    return this.put<Progress>(`/api/progress/${progressId}/goal`, goal);
-  }
-
-  async removeProgressGoal(progressId: string): Promise<ApiResponse<Progress>> {
-    return this.delete<Progress>(`/api/progress/${progressId}/goal`);
-  }
-
-  async getProgressStats(userId: string, category?: string, period?: string): Promise<ApiResponse<any>> {
-    return this.get<any>('/api/progress/stats', { userId, category, period });
-  }
-
-  async getProgressChart(userId: string, category: string, period: string): Promise<ApiResponse<any>> {
-    return this.get<any>('/api/progress/chart', { userId, category, period });
-  }
-
-  // ============================================================================
-  // WORKOUT SESSION METHODS
-  // ============================================================================
-
-  async createWorkoutSession(data: Partial<WorkoutSession>): Promise<ApiResponse<WorkoutSession>> {
-    return this.post<WorkoutSession>('/api/workout-sessions', data);
-  }
-
-  async findWorkoutSessionById(id: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.get<WorkoutSession>(`/api/workout-sessions/${id}`);
-  }
-
-  async updateWorkoutSession(id: string, data: Partial<WorkoutSession>): Promise<ApiResponse<WorkoutSession>> {
-    return this.put<WorkoutSession>(`/api/workout-sessions/${id}`, data);
-  }
-
-  async deleteWorkoutSession(id: string): Promise<ApiResponse<void>> {
-    return this.delete<void>(`/api/workout-sessions/${id}`);
-  }
-
-  async findWorkoutSessionsByUser(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
-    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/user', { userId, ...params });
-  }
-
-  async findWorkoutSessionsByWorkout(workoutId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
-    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/workout', { workoutId, ...params });
-  }
-
-  async findWorkoutSessionsByStatus(status: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WorkoutSession>>> {
-    return this.get<PaginatedResponse<WorkoutSession>>('/api/workout-sessions/status', { status, ...params });
-  }
-
-  async startWorkoutSession(workoutId: string, userId: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.post<WorkoutSession>('/api/workout-sessions/start', { workoutId, userId });
-  }
-
-  async pauseWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/pause`);
-  }
-
-  async resumeWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/resume`);
-  }
-
-  async completeWorkoutSession(sessionId: string, performance: any): Promise<ApiResponse<WorkoutSession>> {
-    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/complete`, performance);
-  }
-
-  async cancelWorkoutSession(sessionId: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}/cancel`);
-  }
-
-  async updateWorkoutSessionPerformance(sessionId: string, exerciseId: string, performance: any): Promise<ApiResponse<WorkoutSession>> {
-    return this.put<WorkoutSession>(`/api/workout-sessions/${sessionId}/performance/${exerciseId}`, performance);
-  }
-
-  async addWorkoutSessionNote(sessionId: string, note: string): Promise<ApiResponse<WorkoutSession>> {
-    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/notes`, { note });
-  }
-
-  async rateWorkoutSession(sessionId: string, rating: number): Promise<ApiResponse<WorkoutSession>> {
-    return this.post<WorkoutSession>(`/api/workout-sessions/${sessionId}/rate`, { rating });
-  }
-
-  async getWorkoutSessionStats(userId: string, period?: string): Promise<ApiResponse<any>> {
-    return this.get<any>('/api/workout-sessions/stats', { userId, period });
-  }
-
-  async getWorkoutHistory(userId: string, workoutId: string): Promise<ApiResponse<WorkoutSession[]>> {
-    return this.get<WorkoutSession[]>(`/api/workout-sessions/history`, { userId, workoutId });
   }
 
   // ============================================================================
@@ -565,28 +253,42 @@ class ApiClient {
   /**
    * Make HTTP request
    */
-  private async request<T>(
-    config: ApiRequestConfig
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(config: {
+    method: string;
+    url: string;
+    body?: any;
+    headers?: Record<string, string>;
+    params?: Record<string, any>;
+  }): Promise<ApiResponse<T>> {
     try {
-      const { method, headers, body, params } = config;
-      const url = this.buildURL(config.url, params);
+      const { method, url, body, headers, params } = config;
+      const fullUrl = params ? this.buildURL(url, params) : 
+                     url.startsWith('http') ? url : `${this.baseURL}${url}`;
       const requestHeaders = this.getHeaders(headers);
 
-      const response = await fetch(url, {
+      console.log(`[API] ${method} ${fullUrl}`); // Debug log
+
+      const response = await fetch(fullUrl, {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const responseData = await response.json();
+      let responseData;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
+      }
 
       if (!response.ok) {
-        throw {
-          response: {
-            status: response.status,
-            data: responseData,
-          },
+        console.error(`[API Error] ${response.status}:`, responseData);
+        return {
+          success: false,
+          error: responseData?.message || responseData || `HTTP ${response.status}`,
+          statusCode: response.status,
         };
       }
 
@@ -596,11 +298,12 @@ class ApiClient {
         statusCode: response.status,
       };
     } catch (error) {
+      console.error('[API Network Error]:', error);
       const apiError = this.handleError(error);
       return {
         success: false,
         error: apiError.message,
-        statusCode: parseInt(apiError.code) || 500,
+        statusCode: parseInt(apiError.code) || 0,
       };
     }
   }
@@ -733,7 +436,8 @@ class ApiClient {
           });
         });
 
-        xhr.open('POST', this.buildURL(url));
+        const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+        xhr.open('POST', fullUrl);
         
         // Add auth header if available
         const token = this.getStoredAuthToken();

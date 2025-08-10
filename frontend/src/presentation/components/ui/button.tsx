@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { ButtonHTMLAttributes, forwardRef, ReactElement, cloneElement } from "react";
 import { cn } from "@/shared/utils/cn";
 
 type Variant = "primary" | "outline" | "ghost" | "soft" | "gradient";
@@ -13,7 +13,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", asChild, children, ...props }, ref) => {
     const base = "inline-flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 disabled:opacity-50 disabled:pointer-events-none group relative overflow-hidden";
 
     const variants: Record<Variant, string> = {
@@ -30,10 +30,23 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: "h-12 px-8 text-base rounded-xl",
     };
 
+    const classes = cn(base, variants[variant], sizes[size], className);
+
+    // Si asChild es true, clona el primer hijo y le aplica las clases
+    if (asChild && children) {
+      const childElement = children as ReactElement<any>;
+      return cloneElement(childElement, {
+        className: cn(classes, childElement.props?.className),
+        ref,
+        ...props,
+      } as any);
+    }
+
+    // Componente normal de botón
     return (
       <button
         ref={ref}
-        className={cn(base, variants[variant], sizes[size], className)}
+        className={classes}
         {...props}
       >
         {/* Gradient overlay for gradient variant */}
@@ -43,7 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         
         {/* Content */}
         <span className="relative z-10 flex items-center gap-2">
-          {props.children}
+          {children}
         </span>
       </button>
     );
@@ -51,5 +64,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
-
-

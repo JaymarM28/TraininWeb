@@ -1,7 +1,6 @@
 import { Hero } from '@/presentation/components/hero';
 import { ExerciseCard } from '@/presentation/components/features/exercises/exercise-card';
 import { RoutineCard } from '@/presentation/components/features/routines/routine-card';
-import { ProgressDashboard } from '@/presentation/components/ui/progress-dashboard';
 import { Dumbbell, Zap, ArrowRight, TrendingUp, Calendar, Target } from 'lucide-react';
 
 type Exercise = {
@@ -25,67 +24,6 @@ export function HomePage({ exercises, routines }: { exercises: Exercise[]; routi
 
       {/* Main content sections */}
       <div className="max-w-7xl mx-auto px-6 py-16 space-y-20">
-        {/* Progress Dashboard */}
-        <section>
-          <ProgressDashboard />
-        </section>
-
-        {/* Featured Exercises */}
-        <section>
-          <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                <Dumbbell className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-white">Ejercicios Destacados</h2>
-                <p className="text-zinc-400">Los mejores ejercicios para tu entrenamiento</p>
-              </div>
-            </div>
-            <a 
-              href="/exercises" 
-              className="group flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors duration-200"
-            >
-              Ver todos
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-            </a>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {exercises.slice(0, 6).map((exercise) => (
-              <ExerciseCard key={exercise.id} {...exercise} />
-            ))}
-          </div>
-        </section>
-
-        {/* Featured Routines */}
-        <section>
-          <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-white">Rutinas Recomendadas</h2>
-                <p className="text-zinc-400">Planes de entrenamiento personalizados</p>
-              </div>
-            </div>
-            <a 
-              href="/routines" 
-              className="group flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors duration-200"
-            >
-              Ver todas
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-            </a>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {routines.slice(0, 6).map((routine) => (
-              <RoutineCard key={routine.id} {...routine} />
-            ))}
-          </div>
-        </section>
-
         {/* Call to Action */}
         <section className="text-center">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900/50 to-zinc-800/50 border border-zinc-700/50 p-12">

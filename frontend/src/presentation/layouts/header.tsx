@@ -5,10 +5,18 @@ import { BrandLogo } from "@/presentation/components/ui/brand-logo";
 import { Button } from "@/presentation/components/ui/button";
 import { NavLink } from "@/presentation/components/ui/nav-link";
 import { Drawer } from "@/presentation/components/mobile/drawer";
-import { Menu, X } from "lucide-react";
+import { useAuth } from "@/presentation/providers/auth-provider";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl">
       {/* Background gradient */}
@@ -41,12 +49,57 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="soft" size="sm" className="hover:bg-zinc-800/50 transition-all duration-300">
-            Ingresar
-          </Button>
-          <Button size="sm" variant="primary" className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25 transition-all duration-300">
-            Empezar
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-medium">
+                  {user?.email}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                asChild
+                className="hover:bg-zinc-800/50 transition-all duration-300"
+              >
+                <a href="/dashboard">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Dashboard
+                </a>
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleLogout}
+                className="hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400 transition-all duration-300"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar Sesión
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="soft" 
+                size="sm" 
+                asChild
+                className="hover:bg-zinc-800/50 transition-all duration-300"
+              >
+                <a href="/login">Ingresar</a>
+              </Button>
+              <Button 
+                size="sm" 
+                variant="primary" 
+                asChild
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25 transition-all duration-300"
+              >
+                <a href="/register">Empezar</a>
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -75,7 +128,29 @@ export function Header() {
             </button>
           </div>
           
+          {/* User info in mobile */}
+          {isAuthenticated && user && (
+            <div className="flex items-center gap-3 p-4 bg-zinc-800/30 rounded-lg mb-4">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-white">{user.email}</p>
+                <p className="text-sm text-zinc-400">Miembro activo</p>
+              </div>
+            </div>
+          )}
+          
           <nav className="space-y-2">
+            {isAuthenticated && (
+              <a 
+                href="/dashboard" 
+                className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-red-400" 
+                onClick={() => setOpen(false)}
+              >
+                Dashboard
+              </a>
+            )}
             <a 
               href="/exercises" 
               className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-red-400" 
@@ -100,17 +175,42 @@ export function Header() {
           </nav>
           
           <div className="flex flex-col gap-3 pt-4 border-t border-zinc-800">
-            <Button variant="outline" size="md" className="w-full hover:bg-zinc-800/50">
-              Ingresar
-            </Button>
-            <Button size="md" className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
-              Empezar
-            </Button>
+            {isAuthenticated ? (
+              <Button 
+                variant="outline" 
+                size="md" 
+                className="w-full hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar Sesión
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="md" 
+                  className="w-full hover:bg-zinc-800/50"
+                  asChild
+                >
+                  <a href="/login" onClick={() => setOpen(false)}>
+                    Ingresar
+                  </a>
+                </Button>
+                <Button 
+                  size="md" 
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                  asChild
+                >
+                  <a href="/register" onClick={() => setOpen(false)}>
+                    Empezar
+                  </a>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Drawer>
     </header>
   );
 }
-
-

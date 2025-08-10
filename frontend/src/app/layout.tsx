@@ -4,11 +4,12 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { MainLayout } from '@/presentation/layouts/main-layout'
 import { ThemeProvider } from '@/presentation/providers/theme-provider'
+import { AuthProvider } from '@/presentation/providers/auth-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'JSC ',
+  title: 'JSC - Entrenamiento Diferencial',
   description: 'Plataforma de entrenamiento con enfoque diferencial y alto rendimiento',
   keywords: 'JSC, entrenamiento, fuerza, rendimiento, gimnasio, rutinas',
   authors: [{ name: 'JSC' }],
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <ThemeProvider>
-          <MainLayout>{children}</MainLayout>
+          <AuthProvider>
+            <MainLayout>{children}</MainLayout>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
