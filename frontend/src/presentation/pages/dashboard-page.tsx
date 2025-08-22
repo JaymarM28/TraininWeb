@@ -57,12 +57,13 @@ export function DashboardPage() {
       
       // Cargar ejercicios y rutinas en paralelo
       const [exercisesResponse, routinesResponse] = await Promise.all([
-        fetch('/api/exercises').then(res => res.ok ? res.json() : []),
-        fetch('/api/routines').then(res => res.ok ? res.json() : [])
+        apiClient.getAllExercises(),
+        apiClient.getAllRoutines()
       ]);
 
-      setExercises(exercisesResponse || []);
-      setRoutines(routinesResponse || []);
+      // Extraer los datos de las respuestas del apiClient
+      setExercises(exercisesResponse.success ? exercisesResponse.data || [] : []);
+      setRoutines(routinesResponse.success ? routinesResponse.data || [] : []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       setError('Error al cargar los datos');

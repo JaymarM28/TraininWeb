@@ -157,9 +157,17 @@ class ApiClient {
     return this.delete<void>(`/api/exercises/${id}`);
   }
 
-  async findAllExercises(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Exercise>>> {
-    return this.get<PaginatedResponse<Exercise>>('/api/exercises', params);
+  async getAllExercises(): Promise<ApiResponse<Exercise[]>> {
+    return this.get<Exercise[]>('/api/exercises/getAll');
   }
+
+
+    // ============================================================================
+  // ROUTINES METHODS
+  // ============================================================================
+  async getAllRoutines(): Promise<ApiResponse<Workout[]>> {
+    return this.get<Workout[]>('/api/routines');
+  }  
 
   // ============================================================================
   // PRIVATE HELPER METHODS

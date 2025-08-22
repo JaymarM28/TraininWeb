@@ -1,4 +1,6 @@
+import { apiClient } from '@/infrastructure/http/api-client';
 import { RoutinesPage as RoutinesClientPage } from '@/presentation/pages/routines-page';
+
 type Routine = {
   id: string;
   name: string;
@@ -8,10 +10,17 @@ type Routine = {
 
 async function getRoutines() {
   try {
-    const res = await fetch('/api/routines', { cache: 'no-store' });
-    if (!res.ok) return [] as Routine[];
-    return (await res.json()) as Routine[];
-  } catch {
+    // ✅ DESPUÉS: Usar apiClient en lugar de fetch directo
+    const response = await apiClient.getAllRoutines();
+    
+    // Manejar la respuesta del apiClient
+    if (response.success && response.data) {
+      return response.data as Routine[];
+    }
+    
+    return [] as Routine[];
+  } catch (error) {
+    console.error('Error fetching routines:', error);
     return [] as Routine[];
   }
 }
@@ -20,5 +29,3 @@ export default async function RoutinesPage() {
   const routines = await getRoutines();
   return <RoutinesClientPage routines={routines} />;
 }
-
-

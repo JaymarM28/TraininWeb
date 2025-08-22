@@ -1,4 +1,6 @@
+import { apiClient } from '@/infrastructure/http/api-client';
 import { HomePage } from '@/presentation/pages/home-page';
+
 type Exercise = {
   id: string;
   name: string;
@@ -15,18 +17,18 @@ type Routine = {
 
 async function getData() {
   try {
+
     const [exercisesRes, routinesRes] = await Promise.all([
-      fetch("/api/exercises", { cache: "no-store" }),
-      fetch("/api/routines", { cache: "no-store" }),
+      apiClient.getAllExercises(),
+      apiClient.getAllRoutines(),
     ]);
 
-    const [exercises, routines] = await Promise.all([
-      exercisesRes.ok ? exercisesRes.json() : Promise.resolve([]),
-      routinesRes.ok ? routinesRes.json() : Promise.resolve([]),
-    ]);
-
-    return { exercises: exercises as Exercise[], routines: routines as Routine[] };
+    return { 
+      exercises: exercisesRes.success ? exercisesRes.data || [] : [],
+      routines: routinesRes.success ? routinesRes.data || [] : []
+    };
   } catch (error) {
+    console.error('Error fetching data:', error);
     return { exercises: [], routines: [] };
   }
 }

@@ -1,4 +1,6 @@
+import { apiClient } from '@/infrastructure/http/api-client';
 import { ExercisesPage as ExercisesClientPage } from '@/presentation/pages/exercises-page';
+
 type Exercise = {
   id: string;
   name: string;
@@ -8,10 +10,15 @@ type Exercise = {
 
 async function getExercises() {
   try {
-    const res = await fetch('/api/exercises', { cache: 'no-store' });
-    if (!res.ok) return [] as Exercise[];
-    return (await res.json()) as Exercise[];
-  } catch {
+    const response = await apiClient.getAllExercises();
+    
+    if (response.success && response.data) {
+      return response.data as Exercise[];
+    }
+    
+    return [] as Exercise[];
+  } catch (error) {
+    console.error('Error fetching exercises:', error);
     return [] as Exercise[];
   }
 }
@@ -20,5 +27,3 @@ export default async function ExercisesPage() {
   const exercises = await getExercises();
   return <ExercisesClientPage exercises={exercises} />;
 }
-
-
