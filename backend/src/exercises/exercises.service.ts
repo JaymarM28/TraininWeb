@@ -8,6 +8,16 @@ export class ExercisesService {
 
   async findAll() {
     return this.prisma.exercise.findMany({
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
       orderBy: { name: 'asc' },
     });
   }
@@ -15,7 +25,33 @@ export class ExercisesService {
   async findByCategory(category: string) {
     return this.prisma.exercise.findMany({
       where: { category },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
       orderBy: { name: 'asc' },
+    });
+  }
+
+  async findById(id: string) {
+    return this.prisma.exercise.findUnique({
+      where: { id },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
     });
   }
 
@@ -27,7 +63,69 @@ export class ExercisesService {
     category: string;
     difficulty: Difficulty;
     muscleGroup: string;
+    createdBy: string; // ✅ Ahora incluimos createdBy
   }) {
-    return this.prisma.exercise.create({ data });
+    return this.prisma.exercise.create({ 
+      data,
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
+    });
+  }
+
+  async update(id: string, data: {
+    name?: string;
+    description?: string;
+    videoUrl?: string;
+    imageUrl?: string;
+    category?: string;
+    difficulty?: Difficulty;
+    muscleGroup?: string;
+    isActive?: boolean;
+  }) {
+    return this.prisma.exercise.update({
+      where: { id },
+      data,
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.exercise.delete({
+      where: { id },
+    });
+  }
+
+  async findByCreator(createdBy: string) {
+    return this.prisma.exercise.findMany({
+      where: { createdBy },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
+      orderBy: { name: 'asc' },
+    });
   }
 }

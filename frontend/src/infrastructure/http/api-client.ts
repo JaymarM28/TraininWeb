@@ -1,5 +1,7 @@
+// frontend/src/infrastructure/http/api-client.ts (versión completa actualizada)
+
 /**
- * HTTP API Client for TraininWeb - Versión Completa
+ * HTTP API Client for TraininWeb - Versión Completa con Roles
  * Centralized HTTP client with interceptors and error handling
  * Implements API contracts for type safety
  */
@@ -22,17 +24,6 @@ import {
   PaginationParams,
   PaginatedResponse
 } from '@/shared/types/shared-types';
-import { 
-  AuthApiContract,
-  UserApiContract,
-  WorkoutApiContract,
-  ExerciseApiContract,
-  TrainingPlanApiContract,
-  ProgressApiContract,
-  WorkoutSessionApiContract,
-  API_ERROR_CODES,
-  ApiErrorCode
-} from '@/shared/contracts/api-contracts';
 
 class ApiClient {
   private baseURL: string;
@@ -86,55 +77,51 @@ class ApiClient {
   }
 
   // ============================================================================
-  // USER METHODS
+  // USER MANAGEMENT METHODS (Para Roles)
   // ============================================================================
 
-  async createUser(data: RegisterRequest): Promise<ApiResponse<User>> {
-    return this.post<User>('/api/users', data);
+  async getUsers(role?: 'ADMIN' | 'COACH' | 'USER'): Promise<ApiResponse<any[]>> {
+    const params = role ? { role } : {};
+    return this.get<any[]>('/api/auth/users', params);
   }
 
-  async findUserById(id: string): Promise<ApiResponse<User>> {
-    return this.get<User>(`/api/users/${id}`);
+  async createUser(data: {
+    email: string;
+    cedula: string;
+    name: string;
+    password: string;
+    role?: 'ADMIN' | 'COACH' | 'USER';
+    coachId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.post<any>('/api/auth/register-user', data);
   }
 
-  async findUserByEmail(email: string): Promise<ApiResponse<User>> {
-    return this.get<User>('/api/users/email', { email });
+  async toggleUserStatus(userId: string): Promise<ApiResponse<any>> {
+    return this.patch<any>(`/api/auth/users/${userId}/toggle-status`);
   }
 
-  async updateUser(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
-    return this.put<User>(`/api/users/${id}`, data);
+  async getDashboardRoute(): Promise<ApiResponse<{ route: string; role: string }>> {
+    return this.get<{ route: string; role: string }>('/api/auth/dashboard-route');
   }
 
-  async deleteUser(id: string): Promise<ApiResponse<void>> {
-    return this.delete<void>(`/api/users/${id}`);
+  async getUserById(userId: string): Promise<ApiResponse<any>> {
+    return this.get<any>(`/api/auth/users/${userId}`);
   }
 
-  async findAllUsers(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<User>>> {
-    return this.get<PaginatedResponse<User>>('/api/users', params);
+  async updateUser(userId: string, data: any): Promise<ApiResponse<any>> {
+    return this.put<any>(`/api/auth/users/${userId}`, data);
   }
 
-  // ============================================================================
-  // WORKOUT METHODS
-  // ============================================================================
-
-  async createWorkout(data: Partial<Workout>): Promise<ApiResponse<Workout>> {
-    return this.post<Workout>('/api/workouts', data);
+  async deleteUser(userId: string): Promise<ApiResponse<void>> {
+    return this.delete<void>(`/api/auth/users/${userId}`);
   }
 
-  async findWorkoutById(id: string): Promise<ApiResponse<Workout>> {
-    return this.get<Workout>(`/api/workouts/${id}`);
+  async assignCoachToUser(userId: string, coachId: string): Promise<ApiResponse<any>> {
+    return this.patch<any>(`/api/auth/users/${userId}/assign-coach`, { coachId });
   }
 
-  async updateWorkout(id: string, data: Partial<Workout>): Promise<ApiResponse<Workout>> {
-    return this.put<Workout>(`/api/workouts/${id}`, data);
-  }
-
-  async deleteWorkout(id: string): Promise<ApiResponse<void>> {
-    return this.delete<void>(`/api/workouts/${id}`);
-  }
-
-  async findAllWorkouts(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Workout>>> {
-    return this.get<PaginatedResponse<Workout>>('/api/workouts', params);
+  async getCoachUsers(coachId: string): Promise<ApiResponse<any[]>> {
+    return this.get<any[]>(`/api/auth/coaches/${coachId}/users`);
   }
 
   // ============================================================================
@@ -161,13 +148,29 @@ class ApiClient {
     return this.get<Exercise[]>('/api/exercises/getAll');
   }
 
-
-    // ============================================================================
+  // ============================================================================
   // ROUTINES METHODS
   // ============================================================================
   async getAllRoutines(): Promise<ApiResponse<Workout[]>> {
     return this.get<Workout[]>('/api/routines');
-  }  
+  }
+
+  // ============================================================================
+  // ROLE-BASED REDIRECTS
+  // ============================================================================
+
+  async getRedirectRoute(): Promise<string> {
+    try {
+      const response = await this.getDashboardRoute();
+      if (response.success && response.data) {
+        return response.data.route;
+      }
+      return '/dashboard'; // fallback
+    } catch (error) {
+      console.error('Error getting redirect route:', error);
+      return '/dashboard'; // fallback
+    }
+  }
 
   // ============================================================================
   // PRIVATE HELPER METHODS
@@ -246,13 +249,13 @@ class ApiClient {
     } else if (error.request) {
       // Network error
       return {
-        code: API_ERROR_CODES.NETWORK_ERROR,
+        code: 'NETWORK_ERROR',
         message: 'Network error - please check your connection',
       };
     } else {
       // Other error
       return {
-        code: API_ERROR_CODES.INTERNAL_SERVER_ERROR,
+        code: 'INTERNAL_SERVER_ERROR',
         message: error.message || 'Unknown error occurred',
       };
     }
@@ -392,76 +395,6 @@ class ApiClient {
       url,
       headers,
     });
-  }
-
-  /**
-   * Upload file
-   */
-  private async uploadFile<T>(
-    url: string,
-    file: File,
-    onProgress?: (progress: number) => void
-  ): Promise<ApiResponse<T>> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const headers = this.getHeaders();
-      delete headers['Content-Type']; // Let browser set content-type for FormData
-
-      const xhr = new XMLHttpRequest();
-
-      return new Promise((resolve) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable && onProgress) {
-            const progress = (event.loaded / event.total) * 100;
-            onProgress(progress);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            const responseData = JSON.parse(xhr.responseText);
-            resolve({
-              success: true,
-              data: responseData,
-              statusCode: xhr.status,
-            });
-          } else {
-            resolve({
-              success: false,
-              error: 'Upload failed',
-              statusCode: xhr.status,
-            });
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          resolve({
-            success: false,
-            error: 'Network error during upload',
-            statusCode: 0,
-          });
-        });
-
-        const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
-        xhr.open('POST', fullUrl);
-        
-        // Add auth header if available
-        const token = this.getStoredAuthToken();
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        }
-
-        xhr.send(formData);
-      });
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Upload failed',
-        statusCode: 500,
-      };
-    }
   }
 }
 

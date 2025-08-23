@@ -1,3 +1,4 @@
+// frontend/src/presentation/layouts/header.tsx (actualización con roles)
 "use client";
 
 import { useState } from "react";
@@ -6,15 +7,57 @@ import { Button } from "@/presentation/components/ui/button";
 import { NavLink } from "@/presentation/components/ui/nav-link";
 import { Drawer } from "@/presentation/components/mobile/drawer";
 import { useAuth } from "@/presentation/providers/auth-provider";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Crown, Shield, Users } from "lucide-react";
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, getDashboardRoute } = useAuth();
 
   const handleLogout = () => {
     logout();
     setOpen(false);
+  };
+
+  // Función para obtener el icono según el rol
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return <Crown className="h-4 w-4 text-yellow-400" />;
+      case 'COACH':
+        return <Shield className="h-4 w-4 text-blue-400" />;
+      case 'USER':
+        return <User className="h-4 w-4 text-green-400" />;
+      default:
+        return <User className="h-4 w-4 text-white" />;
+    }
+  };
+
+  // Función para obtener el color del badge según el rol
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'from-yellow-500 to-yellow-600';
+      case 'COACH':
+        return 'from-blue-500 to-blue-600';
+      case 'USER':
+        return 'from-green-500 to-green-600';
+      default:
+        return 'from-zinc-500 to-zinc-600';
+    }
+  };
+
+  // Función para obtener el nombre del rol en español
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'Administrador';
+      case 'COACH':
+        return 'Entrenador';
+      case 'USER':
+        return 'Cliente';
+      default:
+        return 'Usuario';
+    }
   };
 
   return (
@@ -28,6 +71,7 @@ export function Header() {
         </a>
 
         <nav className="hidden md:flex items-center gap-8 text-sm">
+          {/* Navegación básica visible para todos */}
           <NavLink href="/exercises" className="group">
             <span className="relative">
               Ejercicios
@@ -40,6 +84,28 @@ export function Header() {
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
             </span>
           </NavLink>
+          
+          {/* Navegación específica por rol */}
+          {user?.role === 'ADMIN' && (
+            <NavLink href="/admin" className="group">
+              <span className="relative flex items-center gap-2">
+                <Crown className="h-4 w-4 text-yellow-400" />
+                Panel Admin
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-600 transition-all duration-300 group-hover:w-full"></span>
+              </span>
+            </NavLink>
+          )}
+          
+          {user?.role === 'COACH' && (
+            <NavLink href="/coach" className="group">
+              <span className="relative flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-400" />
+                Panel Coach
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+              </span>
+            </NavLink>
+          )}
+          
           <NavLink href="#contact" className="group">
             <span className="relative">
               Contacto
@@ -52,12 +118,13 @@ export function Header() {
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-3 text-white">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getRoleBadgeColor(user?.role || '')} flex items-center justify-center`}>
+                  {getRoleIcon(user?.role || '')}
                 </div>
-                <span className="text-sm font-medium">
-                  {user?.email}
-                </span>
+                <div className="text-right">
+                  <div className="text-sm font-medium">{user?.name}</div>
+                  <div className="text-xs text-zinc-400">{getRoleDisplayName(user?.role || '')}</div>
+                </div>
               </div>
               <Button 
                 variant="ghost" 
@@ -65,7 +132,7 @@ export function Header() {
                 asChild
                 className="hover:bg-zinc-800/50 transition-all duration-300"
               >
-                <a href="/dashboard">
+                <a href={getDashboardRoute()}>
                   <Settings className="h-4 w-4 mr-2" />
                   Dashboard
                 </a>
@@ -131,12 +198,12 @@ export function Header() {
           {/* User info in mobile */}
           {isAuthenticated && user && (
             <div className="flex items-center gap-3 p-4 bg-zinc-800/30 rounded-lg mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleBadgeColor(user.role)} flex items-center justify-center`}>
+                {getRoleIcon(user.role)}
               </div>
               <div>
-                <p className="font-medium text-white">{user.email}</p>
-                <p className="text-sm text-zinc-400">Miembro activo</p>
+                <p className="font-medium text-white">{user.name}</p>
+                <p className="text-sm text-zinc-400">{getRoleDisplayName(user.role)}</p>
               </div>
             </div>
           )}
@@ -144,13 +211,44 @@ export function Header() {
           <nav className="space-y-2">
             {isAuthenticated && (
               <a 
-                href="/dashboard" 
+                href={getDashboardRoute()} 
                 className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-red-400" 
                 onClick={() => setOpen(false)}
               >
-                Dashboard
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Dashboard
+                </div>
               </a>
             )}
+            
+            {/* Navegación específica por rol en móvil */}
+            {user?.role === 'ADMIN' && (
+              <a 
+                href="/admin" 
+                className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-yellow-400" 
+                onClick={() => setOpen(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  Panel Admin
+                </div>
+              </a>
+            )}
+            
+            {user?.role === 'COACH' && (
+              <a 
+                href="/coach" 
+                className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-blue-400" 
+                onClick={() => setOpen(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Panel Coach
+                </div>
+              </a>
+            )}
+            
             <a 
               href="/exercises" 
               className="block py-3 px-4 rounded-lg hover:bg-zinc-800/50 transition-all duration-200 hover:text-red-400" 

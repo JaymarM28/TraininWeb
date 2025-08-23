@@ -1,3 +1,4 @@
+// frontend/src/presentation/pages/login-page.tsx (actualización)
 "use client";
 
 import { useState } from 'react';
@@ -17,7 +18,7 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, getDashboardRoute } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,8 +30,9 @@ export function LoginPage() {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        // Redirigir al dashboard
-        router.push('/dashboard');
+        // Redirigir según el rol del usuario
+        const dashboardRoute = getDashboardRoute();
+        router.push(dashboardRoute);
       } else {
         setError(result.error || 'Error de autenticación');
       }
@@ -158,6 +160,15 @@ export function LoginPage() {
             </Button>
           </form>
 
+          {/* Demo credentials */}
+          <div className="mt-6 p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+            <h4 className="text-sm font-medium text-zinc-300 mb-2">Credenciales de prueba:</h4>
+            <div className="space-y-1 text-xs text-zinc-400">
+              <p><strong className="text-red-400">Admin:</strong> admin@test.com / 123456</p>
+              <p><strong className="text-blue-400">Coach:</strong> coach@test.com / 123456</p>
+              <p><strong className="text-green-400">User:</strong> user@test.com / 123456</p>
+            </div>
+          </div>
         </div>
 
         {/* Back to home */}

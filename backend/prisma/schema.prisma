@@ -1,3 +1,4 @@
+// backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,8 +15,23 @@ model User {
   name      String
   password  String
   role      Role     @default(USER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relaciones para jerarquía de roles
+  coachId   String? // Usuario asignado a un coach
+  coach     User?   @relation("CoachUsers", fields: [coachId], references: [id])
+  users     User[]  @relation("CoachUsers") // Usuarios que tiene asignados un coach
+
+  // Relaciones de creación (quien creó a quien)
+  createdBy   String? // Quien creó este usuario
+  creator     User?   @relation("UserCreator", fields: [createdBy], references: [id])
+  createdUsers User[] @relation("UserCreator")
+
+  // Relaciones con contenido creado
+  createdExercises Exercise[] @relation("ExerciseCreator")
+  createdRoutines  Routine[]  @relation("RoutineCreator")
 
   @@map("users")
 }
@@ -29,8 +45,13 @@ model Exercise {
   category    String
   difficulty  Difficulty
   muscleGroup String
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relación con el creador
+  createdBy String
+  creator   User   @relation("ExerciseCreator", fields: [createdBy], references: [id])
 
   routineExercises RoutineExercise[]
 
@@ -43,8 +64,13 @@ model Routine {
   description String?
   difficulty  Difficulty
   duration    Int      // en minutos
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relación con el creador
+  createdBy String
+  creator   User   @relation("RoutineCreator", fields: [createdBy], references: [id])
 
   exercises RoutineExercise[]
 
@@ -66,8 +92,9 @@ model RoutineExercise {
 }
 
 enum Role {
-  USER
   ADMIN
+  COACH
+  USER
 }
 
 enum Difficulty {

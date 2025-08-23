@@ -115,7 +115,7 @@ export interface User {
   lastLoginAt?: Date;
 }
 
-export type UserRole = 'admin' | 'trainer' | 'client';
+export type UserRole = 'ADMIN' | 'COACH' | 'USER';
 
 // ============================================================================
 // WORKOUT TYPES

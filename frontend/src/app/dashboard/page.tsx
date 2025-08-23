@@ -1,10 +1,10 @@
-import { ProtectedRoute } from '@/presentation/components/auth/protected-route';
+import { RoleBasedRedirect } from '@/presentation/components/auth/role-based-redirect';
 import { DashboardPage } from '@/presentation/pages/dashboard-page';
 
 export default function Dashboard() {
   return (
-    <ProtectedRoute requireAuth={true}>
+    <RoleBasedRedirect allowedRoles={['USER']}>
       <DashboardPage />
-    </ProtectedRoute>
+    </RoleBasedRedirect>
   );
 }

@@ -1,39 +1,36 @@
-import { apiClient } from '@/infrastructure/http/api-client';
-import { HomePage } from '@/presentation/pages/home-page';
+"use client";
 
-type Exercise = {
-  id: string;
-  name: string;
-  description?: string;
-  category?: string;
-};
+import { useEffect } from 'react';
+import { useAuth } from '@/presentation/providers/auth-provider';
+import { useRouter } from 'next/navigation';
+import { LoginPage } from '@/presentation/pages/login-page';
+import { LoadingSpinner } from '@/presentation/components/ui/loading-spinner';
 
-type Routine = {
-  id: string;
-  name: string;
-  description?: string;
-  duration?: number;
-};
+export default function Login() {
+  const { isAuthenticated, isLoading, getDashboardRoute } = useAuth();
+  const router = useRouter();
 
-async function getData() {
-  try {
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push(getDashboardRoute());
+    }
+  }, [isAuthenticated, isLoading, router, getDashboardRoute]);
 
-    const [exercisesRes, routinesRes] = await Promise.all([
-      apiClient.getAllExercises(),
-      apiClient.getAllRoutines(),
-    ]);
-
-    return { 
-      exercises: exercisesRes.success ? exercisesRes.data || [] : [],
-      routines: routinesRes.success ? routinesRes.data || [] : []
-    };
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    return { exercises: [], routines: [] };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900">
+        <LoadingSpinner size="lg" text="Verificando autenticación..." />
+      </div>
+    );
   }
-}
 
-export default async function Home() {
-  const { exercises, routines } = await getData();
-  return <HomePage exercises={exercises} routines={routines} />;
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900">
+        <LoadingSpinner size="lg" text="Redirigiendo..." />
+      </div>
+    );
+  }
+
+  return <LoginPage />;
 }
